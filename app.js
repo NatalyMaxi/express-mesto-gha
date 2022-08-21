@@ -1,4 +1,5 @@
 const express = require('express');
+
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 
@@ -22,6 +23,7 @@ app.use((req, res, next) => {
 });
 
 app.use('/', require('./routes/users'));
+app.use('/', require('./routes/cards'));
 
 app.listen(PORT, () => {
   console.log(`Сервер запущен на ${PORT} порту`);
