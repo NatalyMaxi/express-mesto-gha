@@ -3,6 +3,8 @@ const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 
+const { ERROR_NOT_FOUND } = require('./utils/utils');
+
 const { PORT = 3000 } = process.env;
 const app = express();
 
@@ -25,8 +27,9 @@ app.use((req, res, next) => {
 app.use('/', require('./routes/users'));
 app.use('/', require('./routes/cards'));
 
+// Обработка запроса на несуществующий роут
 app.use((req, res) => {
-  res.status(404).send({ message: 'Запрашиваемая страница не найдена' });
+  res.status(ERROR_NOT_FOUND).send({ message: 'Запрашиваемая страница не найдена' });
 });
 
 app.listen(PORT, () => {

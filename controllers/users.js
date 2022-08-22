@@ -1,6 +1,10 @@
 const User = require('../models/user');
 const NotFoundError = require('../Error/NotFoundError');
 const NotValidError = require('../Error/NotValidError');
+const {
+  ERROR_BAD_REQUEST,
+  INTERNAL_SERVER_ERROR,
+} = require('../utils/utils');
 
 // Получаем всех пользователей
 module.exports.getUsers = (req, res) => {
@@ -9,7 +13,7 @@ module.exports.getUsers = (req, res) => {
       res.status(200).send({ data: users });
     })
     .catch(() => {
-      res.status(500).send({ message: 'Произошла ошибка на сервере' });
+      res.status(INTERNAL_SERVER_ERROR).send({ message: 'Произошла ошибка на сервере' });
     });
 };
 
@@ -25,9 +29,9 @@ module.exports.getUserById = async (req, res) => {
     if (err instanceof NotFoundError) {
       res.status(err.statusCode).send({ message: err.message });
     } else if (err.name === 'CastError') {
-      res.status(400).send({ message: 'Некорректный id пользователя' });
+      res.status(ERROR_BAD_REQUEST).send({ message: 'Некорректный id пользователя' });
     } else {
-      res.status(500).send({ message: 'Произошла ошибка на сервере' });
+      res.status(INTERNAL_SERVER_ERROR).send({ message: 'Произошла ошибка на сервере' });
     }
   }
 };
@@ -39,9 +43,9 @@ module.exports.createUser = (req, res) => {
     .then((user) => res.send({ data: user }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        res.status(400).send({ message: 'Переданы некорректные данные' });
+        res.status(ERROR_BAD_REQUEST).send({ message: 'Переданы некорректные данные' });
       } else {
-        res.status(500).send({ message: 'Произошла ошибка на сервере' });
+        res.status(INTERNAL_SERVER_ERROR).send({ message: 'Произошла ошибка на сервере' });
       }
     });
 };
@@ -70,9 +74,9 @@ module.exports.updateUser = async (req, res) => {
       err.name === 'ValidationError'
       || err instanceof NotValidError
     ) {
-      res.status(400).send({ message: 'Переданы некорректные данные' });
+      res.status(ERROR_BAD_REQUEST).send({ message: 'Переданы некорректные данные' });
     } else {
-      res.status(500).send({ message: 'Произошла ошибка на сервере' });
+      res.status(INTERNAL_SERVER_ERROR).send({ message: 'Произошла ошибка на сервере' });
     }
   }
 };
@@ -92,9 +96,9 @@ module.exports.updateAvatar = (req, res) => {
       if (err instanceof NotFoundError) {
         res.status(err.statusCode).send({ message: err.message });
       } else if (err.name === 'ValidationError') {
-        res.status(400).send({ message: 'Переданы некорректные данные' });
+        res.status(ERROR_BAD_REQUEST).send({ message: 'Переданы некорректные данные' });
       } else {
-        res.status(500).send({ message: 'Произошла ошибка на сервере' });
+        res.status(INTERNAL_SERVER_ERROR).send({ message: 'Произошла ошибка на сервере' });
       }
     });
 };
