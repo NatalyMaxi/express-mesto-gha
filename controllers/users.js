@@ -1,4 +1,6 @@
 const User = require('../models/user');
+const NotFoundError = require('../Error/NotFoundError');
+const NotValidError = require('../Error/NotValidError');
 
 // Получаем всех пользователей
 module.exports.getUsers = (req, res) => {
@@ -6,48 +8,93 @@ module.exports.getUsers = (req, res) => {
     .then((users) => {
       res.status(200).send({ data: users });
     })
-    .catch((e) => {
-      res.status(500).send({ message: 'Произошла ошибка на сервере', ...e });
+    .catch(() => {
+      res.status(500).send({ message: 'Произошла ошибка на сервере' });
     });
 };
 
 // Получаем пользователя по id
-module.exports.getUserById = (req, res) => {
-  User.findById(req.params.userId)
-    .then((user) => {
-      res.status(200).send({ data: user });
-    })
-    .catch((e) => res.status(500).send({ message: 'Произошла ошибка на сервере', ...e }));
+module.exports.getUserById = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId);
+    if (!user) {
+      throw new NotFoundError('Пользователь не найден');
+    }
+    res.status(200).send({ data: user });
+  } catch (err) {
+    if (err instanceof NotFoundError) {
+      res.status(err.statusCode).send({ message: err.message });
+    } else if (err.name === 'CastError') {
+      res.status(400).send({ message: 'Некорректный id пользователя' });
+    } else {
+      res.status(500).send({ message: 'Произошла ошибка на сервере' });
+    }
+  }
 };
 
 // Создаем нового пользователя
 module.exports.createUser = (req, res) => {
   const { name, about, avatar } = req.body;
   User.create({ name, about, avatar })
-    .then((user) => {
-      res.status(200).send({ data: user });
-    })
-    .catch((e) => res.status(500).send({ message: 'Произошла ошибка на сервере', ...e }));
+    .then((user) => res.send({ data: user }))
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        res.status(400).send({ message: 'Переданы некорректные данные' });
+      } else {
+        res.status(500).send({ message: 'Произошла ошибка на сервере' });
+      }
+    });
 };
 
 // Обновляем данные пользователя
-module.exports.updateUser = (req, res) => {
-  const { name, about } = req.body;
+module.exports.updateUser = async (req, res) => {
   const userId = req.user._id;
-  User.findByIdAndUpdate(userId, { name, about })
-    .then((user) => {
-      res.status(200).send({ data: user });
-    })
-    .catch((e) => res.status(500).send({ message: 'Произошла ошибка на сервере', ...e }));
+  const { name, about } = req.body;
+  try {
+    if (!name || !about) {
+      throw new NotValidError('Переданы некорректные данные');
+    }
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { name, about },
+      { new: true, runValidators: true },
+    );
+    if (!user) {
+      throw new NotFoundError('Пользователь не найден');
+    }
+    res.status(200).send({ data: user });
+  } catch (err) {
+    if (err instanceof NotFoundError) {
+      res.status(err.statusCode).send({ message: err.message });
+    } else if (
+      err.name === 'ValidationError'
+      || err instanceof NotValidError
+    ) {
+      res.status(400).send({ message: 'Переданы некорректные данные' });
+    } else {
+      res.status(500).send({ message: 'Произошла ошибка на сервере' });
+    }
+  }
 };
 
 // Обновляем аватар пользователя
 module.exports.updateAvatar = (req, res) => {
-  const { avatar } = req.body;
   const userId = req.user._id;
-  User.findByIdAndUpdate(userId, { avatar })
+  const { avatar } = req.body;
+  User.findByIdAndUpdate(userId, { avatar }, { new: true, runValidators: true })
     .then((user) => {
+      if (!user) {
+        throw new NotFoundError('Пользователь не найден');
+      }
       res.status(200).send({ data: user });
     })
-    .catch((e) => res.status(500).send({ message: 'Произошла ошибка на сервере', ...e }));
+    .catch((err) => {
+      if (err instanceof NotFoundError) {
+        res.status(err.statusCode).send({ message: err.message });
+      } else if (err.name === 'ValidationError') {
+        res.status(400).send({ message: 'Переданы некорректные данные' });
+      } else {
+        res.status(500).send({ message: 'Произошла ошибка на сервере' });
+      }
+    });
 };
