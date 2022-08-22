@@ -9,7 +9,7 @@ const {
 module.exports.getCards = (req, res) => {
   Card.find({})
     .then((cards) => {
-      res.status(200).send({ data: cards });
+      res.send({ data: cards });
     })
     .catch(() => {
       res.status(INTERNAL_SERVER_ERROR).send({ message: 'Произошла ошибка на сервере' });
@@ -22,7 +22,7 @@ module.exports.createCard = async (req, res) => {
   const owner = req.user._id;
   try {
     const card = await Card.create({ name, link, owner });
-    res.status(200).send(card);
+    res.send(card);
   } catch (err) {
     if (err.name === 'ValidationError') {
       res.status(ERROR_BAD_REQUEST).send({ message: 'Переданы некорректные данные' });
@@ -65,7 +65,7 @@ module.exports.likeCard = (req, res) => {
       if (!card) {
         throw new NotFoundError('Карточка не найдена');
       }
-      res.status(200).send(card);
+      res.send(card);
     })
     .catch((err) => {
       if (err instanceof NotFoundError) {

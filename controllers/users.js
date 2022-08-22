@@ -10,7 +10,7 @@ const {
 module.exports.getUsers = (req, res) => {
   User.find({})
     .then((users) => {
-      res.status(200).send({ data: users });
+      res.send({ data: users });
     })
     .catch(() => {
       res.status(INTERNAL_SERVER_ERROR).send({ message: 'Произошла ошибка на сервере' });
@@ -24,7 +24,7 @@ module.exports.getUserById = async (req, res) => {
     if (!user) {
       throw new NotFoundError('Пользователь не найден');
     }
-    res.status(200).send({ data: user });
+    res.send({ data: user });
   } catch (err) {
     if (err instanceof NotFoundError) {
       res.status(err.statusCode).send({ message: err.message });
@@ -66,7 +66,7 @@ module.exports.updateUser = async (req, res) => {
     if (!user) {
       throw new NotFoundError('Пользователь не найден');
     }
-    res.status(200).send({ data: user });
+    res.send({ data: user });
   } catch (err) {
     if (err instanceof NotFoundError) {
       res.status(err.statusCode).send({ message: err.message });
@@ -90,7 +90,7 @@ module.exports.updateAvatar = (req, res) => {
       if (!user) {
         throw new NotFoundError('Пользователь не найден');
       }
-      res.status(200).send({ data: user });
+      res.send({ data: user });
     })
     .catch((err) => {
       if (err instanceof NotFoundError) {
