@@ -3,6 +3,7 @@ const express = require('express');
 const helmet = require('helmet'); // помогает защитить приложение от некоторых широко известных веб-уязвимостей путем соответствующей настройки заголовков HTTP
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
+const auth = require('./middlewares/auth');
 const { createUser, login } = require('./controllers/users');
 
 const { ERROR_NOT_FOUND } = require('./utils/utils');
@@ -31,6 +32,9 @@ app.use((req, res, next) => {
 
 app.post('/signin', login);
 app.post('/signup', createUser);
+
+app.use(auth); // защищает маршруты, которым нужны авторизация
+
 app.use('/', require('./routes/users'));
 app.use('/', require('./routes/cards'));
 
