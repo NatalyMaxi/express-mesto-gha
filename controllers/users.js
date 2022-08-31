@@ -1,4 +1,4 @@
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcryptjs'); // модуль для хеширования пароля
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 const NotFoundError = require('../Error/NotFoundError');
@@ -60,7 +60,7 @@ module.exports.createUser = async (req, res) => {
     password, email, name, about, avatar,
   } = req.body;
   try {
-    const hashPassword = await bcrypt.hash(password, 10);
+    const hashPassword = await bcrypt.hash(password, 10); // метод hash хеширует пароль
     const user = await User.create({
       email, password: hashPassword, name, about, avatar,
     });
@@ -103,6 +103,17 @@ module.exports.updateUser = async (req, res) => {
       res.status(INTERNAL_SERVER_ERROR).send({ message: 'Произошла ошибка на сервере' });
     }
   }
+};
+
+// Получаем информацию о пользователе
+module.exports.getCurrentUser = (req, res, next) => {
+  const { _id } = req.user;
+  User.findById(_id).then((user) => {
+    if (!user) {
+      return next(new NotFoundError('Пользователь не найден'));
+    }
+    return res.send(user);
+  }).catch(next);
 };
 
 // Обновляем аватар пользователя
