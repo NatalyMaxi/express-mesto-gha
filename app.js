@@ -36,5 +36,6 @@ app.use((req, res) => {
 });
 
 app.listen(PORT, () => {
+  // eslint-disable-next-line
   console.log(`Сервер запущен на ${PORT} порту`);
 });
