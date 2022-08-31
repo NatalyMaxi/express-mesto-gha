@@ -1,3 +1,5 @@
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 const NotFoundError = require('../Error/NotFoundError');
 const NotValidError = require('../Error/NotValidError');
@@ -5,6 +7,22 @@ const {
   ERROR_BAD_REQUEST,
   INTERNAL_SERVER_ERROR,
 } = require('../utils/utils');
+
+module.exports.login = (req, res) => {
+  const { email, password } = req.body;
+  return User.findUserByCredentials(email, password)
+    .then((user) => {
+      const token = jwt.sign(
+        { _id: user._id },
+        { expiresIn: '7d' },
+      );
+
+      res.send({ token });
+    })
+    .catch((err) => {
+      res.status(401).send({ message: err.message });
+    });
+};
 
 // Получаем всех пользователей
 module.exports.getUsers = (req, res) => {
@@ -37,17 +55,23 @@ module.exports.getUserById = async (req, res) => {
 };
 
 // Создаем нового пользователя
-module.exports.createUser = (req, res) => {
-  const { name, about, avatar } = req.body;
-  User.create({ name, about, avatar })
-    .then((user) => res.send({ data: user }))
-    .catch((err) => {
-      if (err.name === 'ValidationError') {
-        res.status(ERROR_BAD_REQUEST).send({ message: 'Переданы некорректные данные' });
-      } else {
-        res.status(INTERNAL_SERVER_ERROR).send({ message: 'Произошла ошибка на сервере' });
-      }
+module.exports.createUser = async (req, res) => {
+  const {
+    password, email, name, about, avatar,
+  } = req.body;
+  try {
+    const hashPassword = await bcrypt.hash(password, 10);
+    const user = await User.create({
+      email, password: hashPassword, name, about, avatar,
     });
+    res.send(user);
+  } catch (err) {
+    if (err.name === 'ValidationError') {
+      res.status(ERROR_BAD_REQUEST).send({ message: 'Переданы некорректные данные' });
+    } else {
+      res.status(INTERNAL_SERVER_ERROR).send({ message: 'Произошла ошибка на сервере' });
+    }
+  }
 };
 
 // Обновляем данные пользователя
