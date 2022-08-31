@@ -16,7 +16,7 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     minlength: 8,
-    select: false, // поле выделяет область ввода объекта.
+    select: false, // чтобы по умолчанию хеш пароля пользователя не возвращалс из базы.
     required: true,
   },
   name: {
