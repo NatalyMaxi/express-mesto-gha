@@ -54,31 +54,35 @@ module.exports.getUserById = async (req, res, next) => {
 };
 
 // Создаем нового пользователя
-module.exports.createUser = async (req, res, next) => {
+module.exports.createUser = (req, res, next) => {
   const {
-    password, email, name, about, avatar,
+    name, about, avatar, email, password,
   } = req.body;
-  try {
-    const hashPassword = await bcrypt.hash(password, 10);
-    const user = await User.create({
-      email, password: hashPassword, name, about, avatar,
-    });
-    res.status(200).send({
-      user: {
-        email: user.email,
+  User.findOne({ email })
+    .then((user) => {
+      if (user) {
+        throw new ConflictError('Email уже зарегистрирован');
+      } return bcrypt.hash(password, 10);
+    })
+    .then((hash) => User.create({
+      name, about, avatar, email, password: hash,
+    }))
+    .then((user) => {
+      if (!user) {
+        return next(new NotFoundError('Пользователь не найден'));
+      } return res.send({
         name: user.name,
         about: user.about,
         avatar: user.avatar,
+        email: user.email,
         _id: user._id,
-      },
+      });
+    })
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        next(new NotValidError('Переданы некорректные данные'));
+      } next(err);
     });
-  } catch (err) {
-    if (err.name === 'MongoServerError' && err.code === 11000) {
-      next(new ConflictError('Email уже зарегистрирован'));
-    } else {
-      next(err);
-    }
-  }
 };
 
 // Обновляем данные пользователя
