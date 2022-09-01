@@ -9,6 +9,7 @@ const { celebrate, Joi, errors } = require('celebrate');
 const auth = require('./middlewares/auth');
 const { createUser, login } = require('./controllers/users');
 const { isUrlValid } = require('./utils/utils');
+const errorHandler = require('./middlewares/errorHandler');
 
 const NotFoundError = require('./Error/NotFoundError');
 
@@ -58,21 +59,12 @@ app.use('/cards', auth, require('./routes/cards'));
 
 // Обработка запроса на несуществующий роут
 
-app.use('*', auth, (req, res, next) => {
+app.use((req, res, next) => {
   next(new NotFoundError('Запрашиваемая страница не найдена'));
 });
 
-app.use((err, req, res, next) => {
-  const { statusCode = 500, message } = err;
-  res.status(statusCode).send({
-    message: statusCode === 500
-      ? 'Произошла ошибка на сервере'
-      : message,
-  });
-  next();
-});
-
 app.use(errors()); // обработчик ошибок celebrate
+app.use(errorHandler);
 
 app.listen(PORT, () => {
   // eslint-disable-next-line
