@@ -3,40 +3,41 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 const NotFoundError = require('../Error/NotFoundError');
 const NotValidError = require('../Error/NotValidError');
-const {
-  ERROR_BAD_REQUEST,
-  INTERNAL_SERVER_ERROR,
-} = require('../utils/utils');
+const CastError = require('../Error/CastError');
+const ConflictError = require('../Error/ConflictError');
 
-module.exports.login = (req, res) => {
+const { NODE_ENV, JWT_SECRET } = process.env;
+
+module.exports.login = (req, res, next) => {
   const { email, password } = req.body;
   return User.findUserByCredentials(email, password)
     .then((user) => {
       const token = jwt.sign(
         { _id: user._id },
+        NODE_ENV ? JWT_SECRET : 'dev-secret',
         { expiresIn: '7d' },
       );
-
-      res.send({ token });
+      res
+        .cookie('jwt', token, {
+          maxAge: 3600000 * 24 * 7,
+          httpOnly: true,
+        })
+        .end();
     })
-    .catch((err) => {
-      res.status(401).send({ message: err.message });
-    });
+    .catch(next);
 };
 
 // Получаем всех пользователей
-module.exports.getUsers = (req, res) => {
+module.exports.getUsers = (req, res, next) => {
   User.find({})
     .then((users) => {
       res.send({ data: users });
     })
-    .catch(() => {
-      res.status(INTERNAL_SERVER_ERROR).send({ message: 'Произошла ошибка на сервере' });
-    });
+    .catch(next);
 };
 
 // Получаем пользователя по id
-module.exports.getUserById = async (req, res) => {
+module.exports.getUserById = async (req, res, next) => {
   try {
     const user = await User.findById(req.params.userId);
     if (!user) {
@@ -44,38 +45,44 @@ module.exports.getUserById = async (req, res) => {
     }
     res.send({ data: user });
   } catch (err) {
-    if (err instanceof NotFoundError) {
-      res.status(err.statusCode).send({ message: err.message });
-    } else if (err.name === 'CastError') {
-      res.status(ERROR_BAD_REQUEST).send({ message: 'Некорректный id пользователя' });
+    if (err.name === 'CastError') {
+      next(new CastError('Некорректный id пользователя'));
     } else {
-      res.status(INTERNAL_SERVER_ERROR).send({ message: 'Произошла ошибка на сервере' });
+      next(err);
     }
   }
 };
 
 // Создаем нового пользователя
-module.exports.createUser = async (req, res) => {
+module.exports.createUser = async (req, res, next) => {
   const {
     password, email, name, about, avatar,
   } = req.body;
   try {
-    const hashPassword = await bcrypt.hash(password, 10); // метод hash хеширует пароль
+    const hashPassword = await bcrypt.hash(password, 10);
     const user = await User.create({
       email, password: hashPassword, name, about, avatar,
     });
-    res.send(user);
+    res.status(200).send({
+      user: {
+        email: user.email,
+        name: user.name,
+        about: user.about,
+        avatar: user.avatar,
+        _id: user._id,
+      },
+    });
   } catch (err) {
-    if (err.name === 'ValidationError') {
-      res.status(ERROR_BAD_REQUEST).send({ message: 'Переданы некорректные данные' });
+    if (err.code === 11000) {
+      next(new ConflictError('Email уже зарегистрирован'));
     } else {
-      res.status(INTERNAL_SERVER_ERROR).send({ message: 'Произошла ошибка на сервере' });
+      next(err);
     }
   }
 };
 
 // Обновляем данные пользователя
-module.exports.updateUser = async (req, res) => {
+module.exports.updateUser = async (req, res, next) => {
   const userId = req.user._id;
   const { name, about } = req.body;
   try {
@@ -91,16 +98,11 @@ module.exports.updateUser = async (req, res) => {
       throw new NotFoundError('Пользователь не найден');
     }
     res.send({ data: user });
-  } catch (err) {
-    if (err instanceof NotFoundError) {
-      res.status(err.statusCode).send({ message: err.message });
-    } else if (
-      err.name === 'ValidationError'
-      || err instanceof NotValidError
-    ) {
-      res.status(ERROR_BAD_REQUEST).send({ message: 'Переданы некорректные данные' });
+  } catch (error) {
+    if (error.name === 'ValidationError') {
+      next(new NotValidError('Переданы некорректные данные'));
     } else {
-      res.status(INTERNAL_SERVER_ERROR).send({ message: 'Произошла ошибка на сервере' });
+      next(error);
     }
   }
 };
@@ -110,30 +112,25 @@ module.exports.getCurrentUser = (req, res, next) => {
   const { _id } = req.user;
   User.findById(_id).then((user) => {
     if (!user) {
-      return next(new NotFoundError('Пользователь не найден'));
+      throw new NotFoundError('Пользователь не найден');
     }
-    return res.send(user);
+    res.send(user);
   }).catch(next);
 };
 
 // Обновляем аватар пользователя
-module.exports.updateAvatar = (req, res) => {
-  const userId = req.user._id;
+module.exports.updateAvatar = (req, res, next) => {
   const { avatar } = req.body;
-  User.findByIdAndUpdate(userId, { avatar }, { new: true, runValidators: true })
-    .then((user) => {
-      if (!user) {
-        throw new NotFoundError('Пользователь не найден');
-      }
-      res.send({ data: user });
-    })
+  User.findByIdAndUpdate(
+    req.user._id,
+    { avatar },
+    { new: true, runValidators: true },
+  )
+    .then((user) => res.send(user))
     .catch((err) => {
-      if (err instanceof NotFoundError) {
-        res.status(err.statusCode).send({ message: err.message });
-      } else if (err.name === 'ValidationError') {
-        res.status(ERROR_BAD_REQUEST).send({ message: 'Переданы некорректные данные' });
-      } else {
-        res.status(INTERNAL_SERVER_ERROR).send({ message: 'Произошла ошибка на сервере' });
+      if (err.name === 'ValidationError') {
+        next(new CastError('Передана Некорректная ссылка'));
       }
+      return next(err);
     });
 };
