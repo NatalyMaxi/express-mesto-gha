@@ -22,7 +22,7 @@ module.exports.login = (req, res, next) => {
           maxAge: 3600000 * 24 * 7,
           httpOnly: true,
         })
-        .send({
+        .send({ // получаем объект пользователя
           name: user.name,
           about: user.about,
           avatar: user.avatar,
@@ -73,15 +73,15 @@ module.exports.createUser = (req, res, next) => {
     .then((hash) => User.create({
       name, about, avatar, email, password: hash,
     }))
-    .then((newUser) => {
-      if (!newUser) {
+    .then((user) => {
+      if (!user) {
         return next(new NotFoundError('Пользователь не найден'));
       } return res.send({
-        name: newUser.name,
-        about: newUser.about,
-        avatar: newUser.avatar,
-        email: newUser.email,
-        _id: newUser._id,
+        name: user.name,
+        about: user.about,
+        avatar: user.avatar,
+        email: user.email,
+        _id: user._id,
       });
     })
     .catch((err) => {
