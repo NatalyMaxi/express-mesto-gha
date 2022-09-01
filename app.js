@@ -58,8 +58,18 @@ app.use('/cards', auth, require('./routes/cards'));
 
 // Обработка запроса на несуществующий роут
 
-app.use('*', auth, (req, res, next) => {
+app.use((req, res, next) => {
   next(new NotFoundError('Запрашиваемая страница не найдена'));
+});
+
+app.use((err, req, res, next) => {
+  const { statusCode = 500, message } = err;
+  res.status(statusCode).send({
+    message: statusCode === 500
+      ? 'Произошла ошибка на сервере'
+      : message,
+  });
+  next();
 });
 
 app.use(errors()); // обработчик ошибок celebrate
