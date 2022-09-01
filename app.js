@@ -58,7 +58,7 @@ app.use('/cards', auth, require('./routes/cards'));
 
 // Обработка запроса на несуществующий роут
 
-app.use((req, res, next) => {
+app.use('*', auth, (req, res, next) => {
   next(new NotFoundError('Запрашиваемая страница не найдена'));
 });
 
