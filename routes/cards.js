@@ -18,6 +18,7 @@ routes.post('/', celebrate({
 }), createCard);
 
 routes.get('/', getCards);
+
 routes.delete('/:cardId', celebrate({
   params: Joi.object().keys({
     cardId: Joi.string().hex().length(24),

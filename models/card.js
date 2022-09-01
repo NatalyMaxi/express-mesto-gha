@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { isUrlValid } = require('../utils/utils');
 
 const cardSchema = new mongoose.Schema({
   name: {
@@ -9,6 +10,7 @@ const cardSchema = new mongoose.Schema({
   },
   link: {
     type: String,
+    validate: [isUrlValid, 'Не корректный URL'],
     required: true,
   },
   owner: {
@@ -18,6 +20,7 @@ const cardSchema = new mongoose.Schema({
   },
   likes: [{
     type: mongoose.Schema.Types.ObjectId, // список лайкнувших пользователей
+    ref: 'user',
     default: [], // по умолчанию пустой массив
   }],
   createdAt: {

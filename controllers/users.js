@@ -109,8 +109,8 @@ module.exports.updateUser = async (req, res, next) => {
 
 // Получаем информацию о пользователе
 module.exports.getCurrentUser = (req, res, next) => {
-  const { _id } = req.user;
-  User.findById(_id).then((user) => {
+  const userId = req.user._id;
+  User.findById(userId).then((user) => {
     if (!user) {
       throw new NotFoundError('Пользователь не найден');
     }
