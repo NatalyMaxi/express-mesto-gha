@@ -22,7 +22,6 @@ app.disable('x-powered-by'); // отключает заголовок X-Powered-
 
 mongoose.connect('mongodb://localhost:27017/mestodb ', {
   useNewUrlParser: true,
-  useUnifiedTopology: true,
 });
 
 app.use(bodyParser.json());
