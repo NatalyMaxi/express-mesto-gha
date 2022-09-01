@@ -1,9 +1,10 @@
 const express = require('express');
 
-const { celebrate, Joi } = require('celebrate');
+const { celebrate, Joi, errors } = require('celebrate');
 const helmet = require('helmet'); // помогает защитить приложение от некоторых широко известных веб-уязвимостей путем соответствующей настройки заголовков HTTP
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
+require('dotenv').config(); // Dotenv — это модуль с нулевой зависимостью, который загружает переменные среды из .envфайла в файлы process.env.
 const auth = require('./middlewares/auth');
 const { createUser, login } = require('./controllers/users');
 
@@ -56,6 +57,8 @@ app.use('/', require('./routes/cards'));
 app.use((req, res, next) => {
   next(new NotFoundError('Запрашиваемая страница не найдена'));
 });
+
+app.use(errors()); // обработчик ошибок celebrate
 
 app.listen(PORT, () => {
   // eslint-disable-next-line
