@@ -73,7 +73,7 @@ module.exports.createUser = async (req, res, next) => {
       },
     });
   } catch (err) {
-    if (err.code === 11000) {
+    if (err.name === 'MongoServerError' && err.code === 11000) {
       next(new ConflictError('Email уже зарегистрирован'));
     } else {
       next(err);
