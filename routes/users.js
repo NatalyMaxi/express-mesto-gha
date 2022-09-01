@@ -14,7 +14,7 @@ routes.get('/', getUsers);
 routes.get('/me', getCurrentUser);
 routes.get('/:userId', celebrate({
   params: Joi.object().keys({
-    userId: Joi.string().hex().length(24),
+    userId: Joi.string().length(24).hex(),
   }),
 }), getUserById);
 
@@ -27,7 +27,7 @@ routes.patch('/me', celebrate({
 
 routes.patch('/me/avatar', celebrate({
   body: Joi.object().keys({
-    avatar: Joi.string().custom(isUrlValid),
+    avatar: Joi.string().min(2).custom(isUrlValid),
   }),
 }), updateAvatar);
 
