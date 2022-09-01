@@ -1,5 +1,6 @@
 const express = require('express');
 
+const cookieParser = require('cookie-parser');
 const { celebrate, Joi, errors } = require('celebrate');
 const helmet = require('helmet'); // помогает защитить приложение от некоторых широко известных веб-уязвимостей путем соответствующей настройки заголовков HTTP
 const mongoose = require('mongoose');
@@ -12,6 +13,7 @@ const NotFoundError = require('./Error/NotFoundError');
 
 const { PORT = 3000 } = process.env;
 const app = express();
+app.use(cookieParser());
 
 app.use(helmet());
 app.disable('x-powered-by'); // отключает заголовок X-Powered-By (заголовок обычно указывает платформу приложений, на которой работает сервер)
