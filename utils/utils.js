@@ -1,9 +1,7 @@
-const ERROR_BAD_REQUEST = 400;
-const ERROR_NOT_FOUND = 404;
-const INTERNAL_SERVER_ERROR = 500;
-
-module.exports = {
-  ERROR_BAD_REQUEST,
-  ERROR_NOT_FOUND,
-  INTERNAL_SERVER_ERROR,
+module.exports.isUrlValid = (url) => {
+  const regex = /^((ftp|http|https):\/\/)?(www\.)?([A-Za-zА-Яа-я0-9]{1}[A-Za-zА-Яа-я0-9-]*\.?)*\.{1}[A-Za-zА-Яа-я0-9-]{2,8}(\/([\w#!:.?+=&%@!\-/])*)?/g;
+  if (regex.test(url)) {
+    return url;
+  }
+  throw new Error('Некорректный url');
 };

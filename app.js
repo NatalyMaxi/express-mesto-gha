@@ -8,6 +8,7 @@ require('dotenv').config(); // Dotenv — это модуль с нулевой 
 const { celebrate, Joi, errors } = require('celebrate');
 const auth = require('./middlewares/auth');
 const { createUser, login } = require('./controllers/users');
+const { isUrlValid } = require('./utils/utils');
 
 const NotFoundError = require('./Error/NotFoundError');
 
@@ -34,7 +35,7 @@ app.post(
       password: Joi.string().required(),
       name: Joi.string().min(2).max(30),
       about: Joi.string().min(2).max(30),
-      avatar: Joi.string().regex(/^((ftp|http|https):\/\/)?(www\.)?([A-Za-zА-Яа-я0-9]{1}[A-Za-zА-Яа-я0-9-]*\.?)*\.{1}[A-Za-zА-Яа-я0-9-]{2,8}(\/([\w#!:.?+=&%@!\-/])*)?/),
+      avatar: Joi.string().custom(isUrlValid),
     }),
   }),
   createUser,
