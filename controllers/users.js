@@ -67,15 +67,15 @@ module.exports.createUser = (req, res, next) => {
     .then((hash) => User.create({
       name, about, avatar, email, password: hash,
     }))
-    .then((user) => {
-      if (!user) {
+    .then((newUser) => {
+      if (!newUser) {
         return next(new NotFoundError('Пользователь не найден'));
       } return res.send({
-        name: user.name,
-        about: user.about,
-        avatar: user.avatar,
-        email: user.email,
-        _id: user._id,
+        name: newUser.name,
+        about: newUser.about,
+        avatar: newUser.avatar,
+        email: newUser.email,
+        _id: newUser._id,
       });
     })
     .catch((err) => {
