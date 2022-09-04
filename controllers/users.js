@@ -92,9 +92,6 @@ module.exports.updateUser = async (req, res, next) => {
   const userId = req.user._id;
   const { name, about } = req.body;
   try {
-    if (!name || !about) {
-      throw new NotValidError('Переданы некорректные данные');
-    }
     const user = await User.findByIdAndUpdate(
       userId,
       { name, about },
