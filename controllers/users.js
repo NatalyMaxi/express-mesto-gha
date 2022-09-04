@@ -69,7 +69,7 @@ module.exports.createUser = async (req, res, next) => {
     const user = await User.create({
       email, password: hash, name, about, avatar,
     });
-    res.status(200).send({
+    res.send({
       user: {
         email: user.email,
         name: user.name,
@@ -129,11 +129,18 @@ module.exports.updateAvatar = (req, res, next) => {
     { avatar },
     { new: true, runValidators: true },
   )
-    .then((user) => res.send(user))
+    .then((user) => {
+      if (!user) {
+        throw new NotFoundError('Пользователь не найден');
+      } else {
+        res.send(user);
+      }
+    })
     .catch((err) => {
       if (err.name === 'ValidationError') {
         next(new CastError('Передана Некорректная ссылка'));
+      } else {
+        next(err);
       }
-      return next(err);
     });
 };
