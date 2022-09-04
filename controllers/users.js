@@ -60,35 +60,31 @@ module.exports.getUserById = async (req, res, next) => {
 };
 
 // Создаем нового пользователя
-module.exports.createUser = (req, res, next) => {
+module.exports.createUser = async (req, res, next) => {
   const {
-    name, about, avatar, email, password,
+    email, password, name, about, avatar,
   } = req.body;
-  User.findOne({ email })
-    .then((user) => {
-      if (user) {
-        throw new ConflictError('Email уже зарегистрирован');
-      } return bcrypt.hash(password, 10);
-    })
-    .then((hash) => User.create({
-      name, about, avatar, email, password: hash,
-    }))
-    .then((user) => {
-      if (!user) {
-        return next(new NotFoundError('Пользователь не найден'));
-      } return res.send({
+  try {
+    const hash = await bcrypt.hash(password, 10);
+    const user = await User.create({
+      email, password: hash, name, about, avatar,
+    });
+    res.status(200).send({
+      user: {
+        email: user.email,
         name: user.name,
         about: user.about,
         avatar: user.avatar,
-        email: user.email,
         _id: user._id,
-      });
-    })
-    .catch((err) => {
-      if (err.name === 'ValidationError') {
-        next(new NotValidError('Переданы некорректные данные'));
-      } next(err);
+      },
     });
+  } catch (err) {
+    if (err.name === 'MongoServerError' && err.code === 11000) {
+      next(new ConflictError('Такой Email уже зарегистрирован'));
+    } else {
+      next(err);
+    }
+  }
 };
 
 // Обновляем данные пользователя

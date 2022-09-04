@@ -6,9 +6,7 @@ const { NODE_ENV, JWT_SECRET } = process.env;
 module.exports = (req, res, next) => {
   const { jwt } = req.cookies;
   if (!jwt) {
-    return res
-      .status(401)
-      .send({ message: 'Необходимо авторизироваться' });
+    return next(new AuthorizationError('Необходимо авторизироваться'));
   }
   let payload;
   try {
