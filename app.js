@@ -5,11 +5,14 @@ const helmet = require('helmet'); // помогает защитить прил�
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 require('dotenv').config(); // Dotenv — это модуль с нулевой зависимостью, который загружает переменные среды из .envфайла в файлы process.env.
-const { celebrate, Joi, errors } = require('celebrate');
+const { errors } = require('celebrate');
 const auth = require('./middlewares/auth');
 const { createUser, login } = require('./controllers/users');
-const { isUrlValid } = require('./utils/utils');
 const errorHandler = require('./middlewares/errorHandler');
+const {
+  validationCreateUser,
+  validationLogin,
+} = require('./utils/utils');
 
 const NotFoundError = require('./Error/NotFoundError');
 
@@ -28,30 +31,9 @@ mongoose.connect('mongodb://localhost:27017/mestodb ', {
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-app.post(
-  '/signin',
-  celebrate({
-    body: Joi.object().keys({
-      email: Joi.string().required().email(),
-      password: Joi.string().required(),
-    }).unknown(true),
-  }),
-  login,
-);
+app.post('/signin', validationLogin, login);
 
-app.post(
-  '/signup',
-  celebrate({
-    body: Joi.object().keys({
-      email: Joi.string().required().email(),
-      password: Joi.string().required().min(8),
-      name: Joi.string().min(2).max(30),
-      about: Joi.string().min(2).max(30),
-      avatar: Joi.string().custom(isUrlValid),
-    }),
-  }),
-  createUser,
-);
+app.post('/signup', validationCreateUser, createUser);
 
 app.use(auth); // защищает маршруты, которым нужны авторизация
 
