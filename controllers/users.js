@@ -2,7 +2,6 @@ const bcrypt = require('bcryptjs'); // модуль для хешировани�
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 const NotFoundError = require('../Error/NotFoundError');
-const NotValidError = require('../Error/NotValidError');
 const CastError = require('../Error/CastError');
 const ConflictError = require('../Error/ConflictError');
 
@@ -103,7 +102,7 @@ module.exports.updateUser = async (req, res, next) => {
     res.send({ data: user });
   } catch (error) {
     if (error.name === 'ValidationError') {
-      next(new NotValidError('Переданы некорректные данные'));
+      next(new CastError('Переданы некорректные данные'));
     } else {
       next(error);
     }

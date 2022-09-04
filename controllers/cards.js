@@ -1,7 +1,7 @@
 const Card = require('../models/card');
 const NotFoundError = require('../Error/NotFoundError');
-const NotValidError = require('../Error/NotValidError');
 const ForbiddenError = require('../Error/ForbiddenError');
+const CastError = require('../Error/CastError');
 
 // Получаем все карточки
 module.exports.getCards = (req, res, next) => {
@@ -19,7 +19,7 @@ module.exports.createCard = async (req, res, next) => {
     res.status(200).send(card);
   } catch (err) {
     if (err.name === 'ValidationError') {
-      next(new NotValidError('Переданы некорректные данные'));
+      next(new CastError('Переданы некорректные данные'));
     } else {
       next(err);
     }
