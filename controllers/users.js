@@ -59,31 +59,34 @@ module.exports.getUserById = async (req, res, next) => {
 };
 
 // Создаем нового пользователя
-module.exports.createUser = async (req, res, next) => {
+module.exports.createUser = (req, res, next) => {
   const {
-    email, password, name, about, avatar,
+    name, about, avatar, email, password,
   } = req.body;
-  try {
-    const hash = await bcrypt.hash(password, 10);
-    const user = await User.create({
-      email, password: hash, name, about, avatar,
-    });
-    res.send({
-      user: {
-        email: user.email,
+  bcrypt.hash(password, 10)
+    .then((hash) => User.create({
+      name, about, avatar, email, password: hash,
+    }))
+    .then((user) => {
+      if (!user) {
+        return next(new NotFoundError('Пользователь не найден'));
+      } return res.send({
         name: user.name,
         about: user.about,
         avatar: user.avatar,
+        email: user.email,
         _id: user._id,
-      },
+      });
+    })
+    .catch((err) => {
+      if (err.code === 11000) {
+        next(new ConflictError('Такой Email уже зарегистрирован'));
+      } else if (err.name === 'ValidationError') {
+        next(new CastError('Переданы некорректные данные'));
+      } else {
+        next(err);
+      }
     });
-  } catch (err) {
-    if (err.name === 'MongoServerError' && err.code === 11000) {
-      next(new ConflictError('Такой Email уже зарегистрирован'));
-    } else {
-      next(err);
-    }
-  }
 };
 
 // Обновляем данные пользователя

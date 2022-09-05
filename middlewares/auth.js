@@ -12,7 +12,7 @@ module.exports = (req, res, next) => {
   try {
     payload = jsonwebtoken.verify(jwt, NODE_ENV === 'production' ? JWT_SECRET : 'dev-secret');
   } catch (err) {
-    next(new AuthorizationError({ message: 'Необходимо авторизироваться' }));
+    return next(new AuthorizationError({ message: 'Необходимо авторизироваться' }));
   }req.user = payload;
   return next();
 };
